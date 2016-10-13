@@ -36,7 +36,8 @@ object ScoverageSbtPlugin extends AutoPlugin {
     coverageOutputDebug := false,
     coverageCleanSubprojectFiles := true,
     coverageOutputTeamCity := false,
-    coverageScalacPluginVersion := DefaultScoverageVersion
+    coverageScalacPluginVersion := DefaultScoverageVersion,
+    coverageScalacRuntimeModule := OrgScoverage %% (scalacRuntime(libraryDependencies.value)) % coverageScalacPluginVersion.value
   )
 
   override def buildSettings: Seq[Setting[_]] = super.buildSettings ++
@@ -57,7 +58,8 @@ object ScoverageSbtPlugin extends AutoPlugin {
         Seq(
           // We only add for "compile"" because of macros. This setting could be optimed to just "test" if the handling
           // of macro coverage was improved.
-          OrgScoverage %% (scalacRuntime(libraryDependencies.value)) % coverageScalacPluginVersion.value,
+          coverageScalacRuntimeModule.value,
+          //GS OrgScoverage %% (scalacRuntime(libraryDependencies.value)) % coverageScalacPluginVersion.value,
           // We don't want to instrument the test code itself, nor add to a pom when published with coverage enabled.
           OrgScoverage %% ScalacPluginArtifact % coverageScalacPluginVersion.value % ScoveragePluginConfig.name
         )
