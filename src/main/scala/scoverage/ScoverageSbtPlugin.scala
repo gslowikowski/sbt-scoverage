@@ -11,7 +11,7 @@ object ScoverageSbtPlugin extends AutoPlugin {
   val ScalacRuntimeArtifact = "scalac-scoverage-runtime"
   val ScalacPluginArtifact = "scalac-scoverage-plugin"
   // this should match the version defined in build.sbt
-  val DefaultScoverageVersion = "1.3.0-SNAPSHOT"
+  val DefaultScoverageVersion = "2.0.0-SNAPSHOT"
   val autoImport = ScoverageKeys
   lazy val ScoveragePluginConfig = config("scoveragePlugin").hide
 
@@ -37,7 +37,7 @@ object ScoverageSbtPlugin extends AutoPlugin {
     coverageCleanSubprojectFiles := true,
     coverageOutputTeamCity := false,
     coverageScalacPluginVersion := DefaultScoverageVersion,
-    coverageScalacRuntimeModule := OrgScoverage %% (scalacRuntime(libraryDependencies.value)) % coverageScalacPluginVersion.value
+    coverageScalacRuntimeModule := None
   )
 
   override def buildSettings: Seq[Setting[_]] = super.buildSettings ++
@@ -56,11 +56,9 @@ object ScoverageSbtPlugin extends AutoPlugin {
     libraryDependencies  ++= {
       if (coverageEnabled.value)
         Seq(
-          // We only add for "compile"" because of macros. This setting could be optimed to just "test" if the handling
-          // of macro coverage was improved.
-          coverageScalacRuntimeModule.value,
-          //GS OrgScoverage %% (scalacRuntime(libraryDependencies.value)) % coverageScalacPluginVersion.value,
-          // We don't want to instrument the test code itself, nor add to a pom when published with coverage enabled.
+          coverageScalacRuntimeModule.value.getOrElse(
+            OrgScoverage %% (scalacRuntime(libraryDependencies.value)) % coverageScalacPluginVersion.value
+          ),
           OrgScoverage %% ScalacPluginArtifact % coverageScalacPluginVersion.value % ScoveragePluginConfig.name
         )
       else
@@ -94,11 +92,11 @@ object ScoverageSbtPlugin extends AutoPlugin {
     ScalacRuntimeArtifact + optionalScalaJsSuffix(deps)
   }
 
-  // returns "_sjs$sjsVersion" for Scala.js projects or "" otherwise
+  // returns "-sjs$sjsVersion" for Scala.js projects or "" otherwise
   private def optionalScalaJsSuffix(deps: Seq[ModuleID]): String = {
     val sjsClassifier = deps.collectFirst{
       case ModuleID("org.scala-js", "scalajs-library", v, _, _, _, _, _, _, _, _) => v
-    }.map(_.take(3)).map(sjsVersion => "_sjs" + sjsVersion)
+    }.map(_.take(3)).map(sjsVersion => "-sjs" + sjsVersion.replace(".",""))
 
     sjsClassifier getOrElse ""
   }
