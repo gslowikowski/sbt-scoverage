@@ -3,7 +3,7 @@ package scoverage
 import sbt.Keys._
 import sbt._
 import sbt.plugins.JvmPlugin
-import scoverage.report.{CoverageAggregator, CoberturaXmlWriter, ScoverageHtmlWriter, ScoverageXmlWriter}
+import scoverage.report.{CoverageAggregator, CoberturaXmlWriter, Deserializer, ScoverageHtmlWriter, ScoverageXmlWriter}
 
 object ScoverageSbtPlugin extends AutoPlugin {
 
@@ -53,7 +53,7 @@ object ScoverageSbtPlugin extends AutoPlugin {
   ) ++ coverageSettings ++ scalacSettings
 
   private lazy val coverageSettings = Seq(
-    libraryDependencies  ++= {
+    libraryDependencies ++= {
       if (coverageEnabled.value)
         Seq(
           coverageScalacRuntimeModule.value.getOrElse(
@@ -222,13 +222,13 @@ object ScoverageSbtPlugin extends AutoPlugin {
   private def loadCoverage(crossTarget: File, log: Logger): Option[Coverage] = {
 
     val dataDir = crossTarget / "/scoverage-data"
-    val coverageFile = Serializer.coverageFile(dataDir)
+    val coverageFile = IOUtils.coverageFile(dataDir)
 
     log.info(s"Reading scoverage instrumentation [$coverageFile]")
 
     if (coverageFile.exists) {
 
-      val coverage = Serializer.deserialize(coverageFile)
+      val coverage = Deserializer.deserialize(coverageFile)
 
       log.info(s"Reading scoverage measurements...")
       val measurementFiles = IOUtils.findMeasurementFiles(dataDir)
